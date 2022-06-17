@@ -14,14 +14,16 @@ public class Analyser{
     // a symbol may be a character, number, word or punctuation mark
     private LinkedHashMap<SymbolData, Integer> frequencies; // in lower case
     private LinkedHashMap<SymbolData, Integer> removedStopSymbols; // in lower case
-    private HashSet<Language> languages;
+    private HashMap<Language, Boolean> languages;
 
     public Analyser(){
         this.text = new ArrayList<>();
         this.frequencies = new LinkedHashMap<>();
-        this.languages = new HashSet<>();
+        this.languages = new HashMap<>();
         this.removedStopSymbols = new LinkedHashMap<>();
     }
+
+    // GET
 
     public ArrayList<SymbolData> getText(){
         return text;
@@ -31,36 +33,66 @@ public class Analyser{
         return frequencies;
     }
 
-    public void addLanguage(Language language){
-        languages.add(language);
-    }
-
-    public void generateFrequencies(Reader reader){
-        generateText(reader);
-        analyse();
-    }
-
-    public void generateText(Reader reader){
-        // copy text from Reader where it is stored
-        for(String symbol : reader.getText()){
-            text.add(new SymbolData(symbol, getLang(symbol)));
-        }
+    public HashMap<Language, Boolean> getLanguages() {
+        return languages;
     }
 
     public Lang getLang(String symbol){
         char firstChar = symbol.charAt(0);
         if(firstChar >= 1040 && firstChar <= 1103) return Lang.RUSSIAN;
         if(firstChar >= 65 && firstChar <= 90
-            || firstChar >= 97 && firstChar <= 122) return Lang.ENGLISH;
+                || firstChar >= 97 && firstChar <= 122) return Lang.ENGLISH;
         if(firstChar >= 48 && firstChar <= 57) return Lang.NUMBER;
         if(firstChar >= 33 && firstChar <= 47
-            || firstChar >= 58 && firstChar <= 64
-            || firstChar >= 91 && firstChar <= 96
-            || firstChar >= 123 && firstChar <= 126) return Lang.PUNCTUATION_MARK;
+                || firstChar >= 58 && firstChar <= 64
+                || firstChar >= 91 && firstChar <= 96
+                || firstChar >= 123 && firstChar <= 126) return Lang.PUNCTUATION_MARK;
         return Lang.UNKNOWN;
     }
 
+    // LANGUAGES
+
+    public void addLanguage(Language language){
+        languages.put(language, true);
+    }
+
+    public void makeLanguageDisable(Language language){
+        if(!languageExists(language)) throw new RuntimeException("There is no such language as "+language.getCode());
+        languages.put(language, false);
+    }
+
+    public void makeLanguageAble(Language language){
+        if(!languageExists(language)) throw new RuntimeException("There is no such language as "+language.getCode());
+        languages.put(language, true);
+    }
+
+    public boolean languageExists(Language language){
+        return languages.containsKey(language);
+    }
+
+    // GENERATE
+
+    public void generateFrequencies(Reader reader){
+        generateText(reader);
+        analyse();
+    }
+
+    public void generateText(Reader reader) throws NullPointerException{
+        if(reader == null) throw new NullPointerException("Reader is undefined.");
+        // copy text from Reader where it is stored
+        for(String symbol : reader.getText()){
+            text.add(new SymbolData(symbol, getLang(symbol)));
+        }
+    }
+
     // PRINT
+
+    public void printLanguages(){
+        for(Language language : languages.keySet()){
+            System.out.println("LANGUAGE - "+language.getCode());
+            for(Entry entry : language.getStopSymbols().entrySet()) System.out.println(entry.getKey()+" -> "+entry.getValue());
+        }
+    }
 
     public void printTextBySymbols(){
         // print text by separated symbols
@@ -215,8 +247,10 @@ public class Analyser{
         // from each added language
         HashSet<String> activeStopSymbols = new HashSet<>();
         // this set will contain each stop symbol in each language
-        for(Language language : languages){
+        for(Language language : languages.keySet()){
             // check each existing language
+            // if language is unable, do not add its stop symbols
+            if(!languages.get(language)) continue;
             activeStopSymbols.addAll(getActiveStopSymbols(language));
         }
         return activeStopSymbols;
