@@ -2,7 +2,6 @@ package languages;
 
 import parsers.Reader;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Language{
