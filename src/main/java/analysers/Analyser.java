@@ -22,6 +22,14 @@ public class Analyser{
         this.removedStopSymbols = new LinkedHashSet<>();
     }
 
+    public ArrayList<String> getText() {
+        return text;
+    }
+
+    public LinkedHashMap<String, Integer> getFrequencies() {
+        return frequencies;
+    }
+
     // PRINT
 
     public void printTextBySymbols(){
