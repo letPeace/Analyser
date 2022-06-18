@@ -56,4 +56,18 @@ public class Language{
         stopSymbols.forEach((key, value) -> System.out.println("Symbol: \"" + key + "\" -> " + value));
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Language language = (Language) o;
+        return getCode().equals(language.getCode());
+    }
+
+    @Override
+    public int hashCode() {
+        return getCode().hashCode();
+    }
+
 }
+

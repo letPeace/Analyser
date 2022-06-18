@@ -1,10 +1,11 @@
 package interfaces;
 
 import analysers.Analyser;
-import languages.Lang;
 import languages.Language;
 import parsers.Reader;
 import parsers.Writer;
+import parsers.WriterFrequencies;
+import parsers.WriterText;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,11 +93,11 @@ public class Interface extends JFrame{
 
         uploadStoplist.addActionListener(new UploadStoplist());
         languages.addActionListener(new LanguagesList());
-        stoplist.addActionListener(new UploadText());
+        stoplist.addActionListener(new StopList());
     }
 
     public void setDefaultFont(){
-        font = new Font("Verdana", Font.PLAIN, 12);
+        font = new Font("Verdana", Font.PLAIN, 16);
 
         file.setFont(font);
         uploadText.setFont(font);
@@ -122,7 +123,6 @@ public class Interface extends JFrame{
                 textReader = new Reader(path);
                 textReader.read();
                 analyser = new Analyser();
-                analyser.generateText(textReader);
                 String message = "Данные импортированы из "+path.substring(path.lastIndexOf('\\')+1);
                 JOptionPane.showMessageDialog(null, message,"Уведомление",JOptionPane.PLAIN_MESSAGE);
             } catch(FileNotFoundException exception){
@@ -135,6 +135,7 @@ public class Interface extends JFrame{
         @Override
         public void actionPerformed(ActionEvent e){
             try{
+                analyser.generateText(textReader);
                 analyser.clearTextFromStopSymbolsOfLanguages();
                 analyser.analyse();
                 analyser.sortFrequenciesByValue();
@@ -158,7 +159,6 @@ public class Interface extends JFrame{
                 JOptionPane.showMessageDialog(null, exception.getMessage(),"Ошибка",JOptionPane.PLAIN_MESSAGE);
             }
         }
-        // --------------Write -> TextWriter & FrequenciesWriter
         private String chooseFile(boolean chooseText) throws FileNotFoundException{
             String defaultPath = "D:\\_Mehi\\6sem\\java\\analyser\\src\\main\\resources\\out\\";
             JFileChooser fileChooser = new JFileChooser(defaultPath);
@@ -171,9 +171,8 @@ public class Interface extends JFrame{
                 path = fileChooser.getSelectedFile().getAbsolutePath();
             }
             if(path.equals("")) throw new FileNotFoundException("Выберите файл");
-            Writer writer = new Writer(path, analyser);
-            if(chooseText) writer.saveText();
-            else writer.saveFrequencies();
+            Writer writer = chooseText ? new WriterText(path, analyser) : new WriterFrequencies(path, analyser);
+            writer.save();
             return path.substring(path.lastIndexOf('\\')+1);
         }
     }
@@ -217,16 +216,37 @@ public class Interface extends JFrame{
                     checkBox.addItemListener(new ItemListener() {
                         @Override
                         public void itemStateChanged(ItemEvent e) {
-                            toggleLanguage(language);
-                            checkBox.setSelected(!active);
+                            var languages = analyser.getLanguages();
+                            boolean oppositeActive = !languages.get(language);
+                            languages.put(language, oppositeActive);
+//                            boolean oppositeActive = toggleLanguage(language);
+                            checkBox.setSelected(oppositeActive);
                         }
                     });
                 }
                 panel.add(checkBoxesPanel, BorderLayout.SOUTH);
                 setPreferredSize(new Dimension(250, 200));
                 frame.setContentPane(panel);
-                frame.setBounds(200,200,300,400);
+                frame.setBounds(200,200,300,100);
                 frame.setVisible(true);
+            } catch(Exception exception){
+                JOptionPane.showMessageDialog(null, exception.getMessage(),"Ошибка",JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+        private boolean toggleLanguage(Language language){
+            // toggle value of language
+            var languages = analyser.getLanguages();
+            boolean oppositeActive = !languages.get(language);
+            languages.put(language, oppositeActive);
+            return oppositeActive;
+        }
+    }
+
+    class StopList implements ActionListener{
+        @Override
+        public void actionPerformed(ActionEvent e){
+            try{
+                //
             } catch(Exception exception){
                 JOptionPane.showMessageDialog(null, exception.getMessage(),"Ошибка",JOptionPane.PLAIN_MESSAGE);
             }
@@ -235,45 +255,9 @@ public class Interface extends JFrame{
             // toggle value of language
             var languages = analyser.getLanguages();
             languages.put(language, !languages.get(language));
+            System.out.println(language.getCode()+" "+languages.get(language));
         }
     }
-
-/*
-    class ButtonPrintEventListener implements ActionListener{
-        @Override
-        public void actionPerformed(ActionEvent e){
-            try{
-                if(reactorList == null) throw new Exception("Нет данных");
-                DefaultMutableTreeNode reactorTree = new DefaultMutableTreeNode("Reactor", true);
-                DefaultMutableTreeNode reactorBranch = null;
-                for(Reactor reactor : reactorList.getReactors()){
-                    reactorBranch = new DefaultMutableTreeNode(reactor.getType(), true);
-                    reactorBranch.add(new DefaultMutableTreeNode("burnup = "+reactor.getBurnup(), false));
-                    reactorBranch.add(new DefaultMutableTreeNode("kpd = "+reactor.getKpd(), false));
-                    reactorBranch.add(new DefaultMutableTreeNode("enrichment = "+reactor.getEnrichment(), false));
-                    reactorBranch.add(new DefaultMutableTreeNode("termalCapacity = "+reactor.getTermalCapacity(), false));
-                    reactorBranch.add(new DefaultMutableTreeNode("electricalCapacity = "+reactor.getElectricalCapacity(), false));
-                    reactorBranch.add(new DefaultMutableTreeNode("lifeTime = "+reactor.getLifeTime(), false));
-                    reactorBranch.add(new DefaultMutableTreeNode("firstLoad = "+reactor.getFirstLoad(), false));
-                    reactorTree.add(reactorBranch);
-                }
-                tree = new JTree(reactorTree);
-                tree.setShowsRootHandles(true);
-                //
-                JFrame infoFrame = new JFrame("info");
-                JPanel infoPanel = new JPanel();
-                infoPanel.setLayout(new BorderLayout());
-                infoFrame.setContentPane(infoPanel);
-                infoFrame.setBounds(200,200,300,400);
-                infoFrame.add(tree);
-                infoFrame.add(new JScrollPane(tree));
-                infoFrame.setVisible(true);
-            } catch(Exception exception){
-                JOptionPane.showMessageDialog(null, exception.getMessage(),"Вывод",JOptionPane.PLAIN_MESSAGE);
-            }
-        }
-    }
-*/
 
     class Exit implements ActionListener{
         @Override

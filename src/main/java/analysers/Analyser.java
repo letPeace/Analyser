@@ -80,8 +80,9 @@ public class Analyser{
     public void generateText(Reader reader) throws NullPointerException{
         if(reader == null) throw new NullPointerException("Reader is undefined.");
         // copy text from Reader where it is stored
+        text.clear();
         for(String symbol : reader.getText()){
-            text.add(new SymbolData(symbol, getLang(symbol)));
+            text.add(new SymbolData(new String(symbol), getLang(symbol)));
         }
     }
 
